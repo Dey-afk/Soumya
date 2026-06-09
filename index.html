@@ -1,75 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Drive Media Gallery</title>
+<title>Drive Gallery</title>
 <style>
-body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f5f7fb;}
-#adminBtn{position:fixed;top:15px;right:15px;background:#111827;color:white;padding:10px 15px;border-radius:8px;cursor:pointer;z-index:1000;}
-#adminPanel{position:fixed;top:60px;right:15px;width:300px;background:white;padding:15px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.2);display:none;z-index:1000;}
-#adminPanel input, #adminPanel button{width:100%;margin-bottom:10px;padding:10px;border-radius:8px;border:1px solid #ccc;}
-#adminPanel button{background:#2563eb;color:white;border:none;cursor:pointer;}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:50px;}
-.card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.1);}
-.preview{width:100%;height:220px;object-fit:cover;background:#eee;}
-.info{padding:15px;}
-.filename{font-weight:bold;margin-bottom:10px;}
-#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);justify-content:center;align-items:center;z-index:999;}
-#lightbox img{max-width:90%;max-height:90%;}
-.btn-open{display:block;background:#2563eb;color:white;text-align:center;padding:10px;border-radius:8px;text-decoration:none;}
+body{font-family:Arial;background:#f5f7fb;margin:0;padding:20px;}
+#adminBtn{position:fixed;top:10px;right:10px;background:#111827;color:#fff;padding:10px;border-radius:8px;cursor:pointer;}
+#panel{position:fixed;top:60px;right:10px;background:#fff;padding:15px;border-radius:10px;display:none;width:300px;box-shadow:0 5px 20px rgba(0,0,0,0.2);}
+input{width:100%;padding:8px;margin-bottom:10px;}
+button{width:100%;padding:10px;background:#2563eb;color:#fff;border:none;border-radius:8px;}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;margin-top:60px;}
+.card{background:#fff;padding:10px;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,0.1);}
+img{width:100%;border-radius:8px;}
 </style>
 </head>
 <body>
 
-<div id="adminBtn" onclick="toggleAdmin()">Admin</div>
-<div id="adminPanel">
-  <h3>Admin Panel</h3>
-  <input type="text" id="folderLink" placeholder="Paste Google Drive folder link">
-  <button onclick="loadGallery()">Load Gallery</button>
+<div id="adminBtn" onclick="toggle()">Admin</div>
+
+<div id="panel">
+  <input id="link" placeholder="Paste Drive folder link">
+  <button onclick="load()">Load</button>
 </div>
 
 <div class="gallery" id="gallery"></div>
-<div id="lightbox" onclick="closeLightbox()"><img id="lightboxImg"></div>
 
 <script>
-function toggleAdmin(){
-    const panel=document.getElementById("adminPanel");
-    panel.style.display = panel.style.display==="block"?"none":"block";
-}
-function openLightbox(src){document.getElementById("lightbox").style.display="flex";document.getElementById("lightboxImg").src=src;}
-function closeLightbox(){document.getElementById("lightbox").style.display="none";}
-
-async function loadGallery(){
-    const link=document.getElementById("folderLink").value.trim();
-    if(!link){alert("Paste a folder link"); return;}
-    try{
-        const res=await fetch(`http://localhost:3000/folder?link=${encodeURIComponent(link)}`);
-        const files=await res.json();
-        if(files.error){alert(files.error); return;}
-        renderGallery(files);
-    }catch(err){
-        console.error(err);
-        alert("Failed to load folder from server");
-    }
+function toggle(){
+  const p=document.getElementById("panel");
+  p.style.display = p.style.display==="block"?"none":"block";
 }
 
-function renderGallery(files){
-    const gallery=document.getElementById("gallery");
-    gallery.innerHTML="";
-    files.forEach(file=>{
-        const card=document.createElement("div");
-        card.className="card";
-        const img=`https://drive.google.com/uc?id=${file.id}`;
-        card.innerHTML=`
-          <img class="preview" src="${img}" onclick="openLightbox('${img}')">
-          <div class="info">
-            <div class="filename">${file.name}</div>
-            <a class="btn-open" target="_blank" href="https://drive.google.com/file/d/${file.id}/view">Open</a>
-          </div>`;
-        gallery.appendChild(card);
-    });
+async function load(){
+  const link=document.getElementById("link").value;
+
+  const res = await fetch("/folder?link="+encodeURIComponent(link));
+  const data = await res.json();
+
+  const g=document.getElementById("gallery");
+  g.innerHTML="";
+
+  data.forEach(f=>{
+    const img=`https://drive.google.com/uc?id=${f.id}`;
+    g.innerHTML+=`
+      <div class="card">
+        <img src="${img}">
+        <p>${f.name}</p>
+      </div>
+    `;
+  });
 }
 </script>
+
 </body>
 </html>
